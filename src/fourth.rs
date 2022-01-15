@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell};
 use std::rc::Rc;
 
 struct Node<T> {
@@ -84,7 +84,48 @@ impl<T> List<T> {
             Rc::try_unwrap(old_head_rc).ok().unwrap().into_inner().elem
         })
     }
+
+    pub fn peek_front(&self) -> Option<Ref<T>> {
+        self.head.as_ref().map(|node| node.borrow())
+    }
+}
+
+impl<T> Drop for List<T> {
+    fn drop(&mut self) {
+        while self.pop_front().is_some() {}
+    }
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::List;
+
+    #[test]
+    fn basics() {
+        let mut list = List::new();
+
+        // Check empty list behaves right
+        assert_eq!(list.pop_front(), None);
+
+        // populate list
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+
+        // check normal removal
+        assert_eq!(list.pop_front(), Some(3));
+        assert_eq!(list.pop_front(), Some(2));
+
+        // push some more just to make sure nothing's corrupted
+        list.push_front(4);
+        list.push_front(5);
+
+        // check normal removal
+        assert_eq!(list.pop_front(), Some(5));
+        assert_eq!(list.pop_front(), Some(4));
+
+        // check exhaustion
+        assert_eq!(list.pop_front(), Some(1));
+        assert_eq!(list.pop_front(), None);
+    }
+}
