@@ -54,4 +54,37 @@ impl<T> List<T> {
             }
         }
     }
+
+    pub fn pop_front(&mut self) -> Option<T> {
+        // replace list head with None, and take ownership of old_head...
+        // old_head itself being a Rc.
+        self.head.take().map(|old_head_rc| {
+            // start a new block so that node_mut_ref goes out of scope before
+            // we use old_head_rc again - so the compiler can tell we don't still
+            // have the mutable reference...
+            {
+                // get a mutable reference to the actual node within the RefCell
+                let mut old_head_node_mut_ref = old_head_rc.borrow_mut();
+                // take ownership of the Rc from the old head, pointing to the new head
+                match old_head_node_mut_ref.next.take() {
+                    Some(new_head) => {
+                        // .take() would work here too...the point is that the
+                        // new_head should have its prev set to None
+                        new_head.borrow_mut().prev = None;
+                        // NB here we're re-using the Rc which was originally
+                        // owned by old_head - so there's no need for a clone.
+                        self.head = Some(new_head)
+                    }
+                    None => {
+                        // emptying list
+                        self.tail = None;
+                    }
+                }
+            }
+            Rc::try_unwrap(old_head_rc).ok().unwrap().into_inner().elem
+        })
+    }
 }
+
+#[cfg(test)]
+mod test {}
