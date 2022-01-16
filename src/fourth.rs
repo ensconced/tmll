@@ -157,16 +157,16 @@ impl<T> Iterator for IntoIter<T> {
     }
 }
 
-impl<'a, T> Iterator for Iter<'a, T> {
-    type Item = Ref<'a, T>;
+// impl<'a, T> Iterator for Iter<'a, T> {
+//     type Item = Ref<'a, T>;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.take().map(|node_ref| {
-            self.0 = node_ref.next.as_ref().map(|refcell| refcell.borrow());
-            Ref::map(node_ref, |node| &node.elem)
-        })
-    }
-}
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.0.take().map(|node_ref| {
+//             self.0 = node_ref.next.as_ref().map(|refcell| refcell.borrow());
+//             Ref::map(node_ref, |node| &node.elem)
+//         })
+//     }
+// }
 
 impl<T> DoubleEndedIterator for IntoIter<T> {
     fn next_back(&mut self) -> Option<T> {
