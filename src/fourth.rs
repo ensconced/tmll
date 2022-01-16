@@ -25,6 +25,7 @@ pub struct List<T> {
 }
 
 pub struct IntoIter<T>(List<T>);
+pub struct Iter<'a, T>(Option<Ref<'a, Node<T>>>);
 
 impl<T> List<T> {
     pub fn new() -> Self {
@@ -143,12 +144,27 @@ impl<T> List<T> {
     pub fn into_iter(self) -> IntoIter<T> {
         IntoIter(self)
     }
+
+    pub fn iter(&self) -> Iter<T> {
+        Iter(self.head.as_ref().map(|node| node.borrow()))
+    }
 }
 
 impl<T> Iterator for IntoIter<T> {
     type Item = T;
     fn next(&mut self) -> Option<T> {
         self.0.pop_front()
+    }
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = Ref<'a, T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.take().map(|node_ref| {
+            self.0 = node_ref.next.as_ref().map(|refcell| refcell.borrow());
+            Ref::map(node_ref, |node| &node.elem)
+        })
     }
 }
 
